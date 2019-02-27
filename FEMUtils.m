@@ -99,8 +99,8 @@ shapeFunctions["line4"] := shapeFunctionsLagrange1D[3];
 (*Hermite polynomials of 3rd order.*)
 discreteValues["hermite3"] := {posDof[1], tanDof[1], posDof[2], tanDof[2]};
 shapeFunctions["hermite3"] := {
-  1/4 (2 + xi) (1 - xi)^2, 1/4 (1 + xi) (1 - xi)^2 lenDof,
-  1/4 (2 - xi) (1 + xi)^2, -(1/4) (1 - xi) (1 + xi)^2 lenDof
+  1/4 (2 + xi) (1 - xi)^2, 1/4 (1 + xi) (1 - xi)^2 lenDof/2,
+  1/4 (2 - xi) (1 + xi)^2, -(1/4) (1 - xi) (1 + xi)^2 lenDof/2
   };
 
 
