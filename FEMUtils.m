@@ -12,6 +12,7 @@ BeginPackage["FEMUtils`"];
 
 
 fieldFunction::usage="TODO";
+shapeFunctions::usage="TODO";
 discreteValues::usage="TODO";
 nodalCoordiantes3D::usage="TODO";
 xi::usage="TODO";
@@ -35,7 +36,7 @@ Begin["`Private`"];
 
 
 (* Lagrange shape functions *)
-shapeFunctionsLagrange1D[order_] := Module[{xiPoints},
+shapeFunctionsInternalLagrange1D[order_] := Module[{xiPoints},
   xiPoints = Flatten[{-1, 1, Drop[Drop[Table[xi, {xi, -1, 1, 2/order}], 1], -1]}];
   Table[  	
    Simplify[
@@ -50,15 +51,18 @@ shapeFunctionsLagrange1D[order_] := Module[{xiPoints},
 
 
 (*Default function (throws error).*)
-shapeFunctions[var_:None] := (Print[StringForm["Shape function `` is not implemented!", var]];Abort[])
+shapeFunctionsInternal[var_:None] := (Print[StringForm["Shape function `` is not implemented!", var]];Abort[])
 discreteValues[var_:None] := (Print[StringForm["Discrete values for `` is not implemented!", var]];Abort[])
 discreteValuesOrder[None] := (Print[StringForm["Discrete values order for `` is not implemented!", None]];Abort[])
 
+(*Function to get the actual shape functions*)
+shapeFunctions[var_] := D[fieldFunction[var], {discreteValues[var]}];
+
 (*Calculate the field function with the nodal values.*)
-fieldFunction[var_] := shapeFunctions[var] . discreteValues[var][[ discreteValuesOrder[var] ]];
+fieldFunction[var_] := shapeFunctionsInternal[var] . discreteValues[var][[ discreteValuesOrder[var] ]];
 
 (*If discreteValues is not given use the number of nodes.*)
-discreteValues[var_] := Table[posDof[i], {i, Length[shapeFunctions[var]]}];
+discreteValues[var_] := Table[posDof[i], {i, Length[shapeFunctionsInternal[var]]}];
 
 (*If discreteValuesOrder is not given use the ordering in discreteValues.*)
 discreteValuesOrder[var_] := Table[i, {i, Length[discreteValues[var]]}];
@@ -88,17 +92,17 @@ nodalCoordiantes3D[var_] := Module[{shapeFunct, solCoordinates},
 
 
 (*Line with linear shape functions.*)
-shapeFunctions["line2"] := shapeFunctionsLagrange1D[1];
+shapeFunctionsInternal["line2"] := shapeFunctionsInternalLagrange1D[1];
 
 (*Line with quadratic shape functions.*)
-shapeFunctions["line3"] := shapeFunctionsLagrange1D[2];
+shapeFunctionsInternal["line3"] := shapeFunctionsInternalLagrange1D[2];
 
 (*Line with cubic shape functions.*)
-shapeFunctions["line4"] := shapeFunctionsLagrange1D[3];
+shapeFunctionsInternal["line4"] := shapeFunctionsInternalLagrange1D[3];
 
 (*Hermite polynomials of 3rd order.*)
 discreteValues["hermite3"] := {posDof[1], tanDof[1], posDof[2], tanDof[2]};
-shapeFunctions["hermite3"] := {
+shapeFunctionsInternal["hermite3"] := {
   1/4 (2 + xi) (1 - xi)^2, 1/4 (1 + xi) (1 - xi)^2 lenDof/2,
   1/4 (2 - xi) (1 + xi)^2, -(1/4) (1 - xi) (1 + xi)^2 lenDof/2
   };
@@ -110,14 +114,14 @@ shapeFunctions["hermite3"] := {
 
 (*Bilinear quad element.*)
 discreteValuesOrder["quad4"] := {1, 4, 2, 3};
-shapeFunctions["quad4"] := Flatten[ Transpose[{shapeFunctions["line2"]} /. xi -> xi1] . ({shapeFunctions["line2"]} /. xi -> xi2) ];
+shapeFunctionsInternal["quad4"] := Flatten[ Transpose[{shapeFunctionsInternal["line2"]} /. xi -> xi1] . ({shapeFunctionsInternal["line2"]} /. xi -> xi2) ];
 
 (*Quadratic rectangular element.*)
 discreteValuesOrder["quad9"] := {1, 4, 8, 2, 3, 6, 5, 7, 9};
-shapeFunctions["quad9"] := Flatten[ Transpose[{shapeFunctions["line3"]} /. xi -> xi1] . ({shapeFunctions["line3"]} /. xi -> xi2) ];
+shapeFunctionsInternal["quad9"] := Flatten[ Transpose[{shapeFunctionsInternal["line3"]} /. xi -> xi1] . ({shapeFunctionsInternal["line3"]} /. xi -> xi2) ];
 
 (*Seredipity element.*)
-shapeFunctions["quad8"] := {1/4 ((1 - xi1) (1 - xi2) - (1 - xi1^2) (1 - xi2) - (1 - xi1) (1 - xi2^2)),
+shapeFunctionsInternal["quad8"] := {1/4 ((1 - xi1) (1 - xi2) - (1 - xi1^2) (1 - xi2) - (1 - xi1) (1 - xi2^2)),
     1/4 ((1 + xi1) (1 - xi2) - (1 - xi1^2) (1 - xi2) - (1 + xi1) (1 - xi2^2)),
     1/4 ((1 + xi1) (1 + xi2) - (1 - xi1^2) (1 + xi2) - (1 + xi1) (1 - xi2^2)),
     1/4 ((1 - xi1) (1 + xi2) - (1 - xi1^2) (1 + xi2) - (1 - xi1) (1 - xi2^2)),
@@ -130,7 +134,7 @@ shapeFunctions["quad8"] := {1/4 ((1 - xi1) (1 - xi2) - (1 - xi1^2) (1 - xi2) - (
 
 
 (*Hex8 element.*)
-shapeFunctions["hex8"] := {1/8 (1 - xi1) (1 - xi2) (1 - xi3), 1/8 (1 + xi1) (1 - xi2) (1 - xi3),
+shapeFunctionsInternal["hex8"] := {1/8 (1 - xi1) (1 - xi2) (1 - xi3), 1/8 (1 + xi1) (1 - xi2) (1 - xi3),
   1/8 (1 + xi1) (1 + xi2) (1 - xi3), 
  1/8 (1 - xi1) (1 + xi2) (1 - xi3), 1/8 (1 - xi1) (1 - xi2) (1 + xi3),
   1/8 (1 + xi1) (1 - xi2) (1 + xi3), 
@@ -138,7 +142,7 @@ shapeFunctions["hex8"] := {1/8 (1 - xi1) (1 - xi2) (1 - xi3), 1/8 (1 + xi1) (1 -
 
 
 (*Hex8 element.*)
-shapeFunctions["hex20"] := {1/8 (1 - xi1) (1 - xi2) (1 - xi3) (-2. - xi1 - xi2 - xi3), 
+shapeFunctionsInternal["hex20"] := {1/8 (1 - xi1) (1 - xi2) (1 - xi3) (-2. - xi1 - xi2 - xi3), 
  1/8 (1 + xi1) (1 - xi2) (1 - xi3) (-2. + xi1 - xi2 - xi3), 
  1/8 (1 + xi1) (1 + xi2) (1 - xi3) (-2. + xi1 + xi2 - xi3), 
  1/8 (1 - xi1) (1 + xi2) (1 - xi3) (-2. - xi1 + xi2 - xi3), 
@@ -161,7 +165,7 @@ shapeFunctions["hex20"] := {1/8 (1 - xi1) (1 - xi2) (1 - xi3) (-2. - xi1 - xi2 -
 
 
 (*Hex27 element.*)
-shapeFunctions["hex27"] := {1/8 (-1 + xi1) xi1 (-1 + xi2) xi2 (-1 + xi3) xi3, 
+shapeFunctionsInternal["hex27"] := {1/8 (-1 + xi1) xi1 (-1 + xi2) xi2 (-1 + xi3) xi3, 
  1/8 xi1 (1 + xi1) (-1 + xi2) xi2 (-1 + xi3) xi3, 
  1/8 xi1 (1 + xi1) xi2 (1 + xi2) (-1 + xi3) xi3, 
  1/8 (-1 + xi1) xi1 xi2 (1 + xi2) (-1 + xi3) xi3, 
@@ -191,11 +195,11 @@ shapeFunctions["hex27"] := {1/8 (-1 + xi1) xi1 (-1 + xi2) xi2 (-1 + xi3) xi3,
 
 
 (*Tet4 element.*)
-shapeFunctions["tet4"] := {1 - xi1 - xi2 - xi3, xi1, xi2, xi3};
+shapeFunctionsInternal["tet4"] := {1 - xi1 - xi2 - xi3, xi1, xi2, xi3};
 
 
 (*Tet10 element.*)
-shapeFunctions["tet10"] := {(-1 + 2 (1 - xi1 - xi2 - xi3)) (1 - xi1 - xi2 - xi3), 
+shapeFunctionsInternal["tet10"] := {(-1 + 2 (1 - xi1 - xi2 - xi3)) (1 - xi1 - xi2 - xi3), 
  xi1 (-1 + 2 xi1), xi2 (-1 + 2 xi2), xi3 (-1 + 2 xi3), 
  4 xi1 (1 - xi1 - xi2 - xi3), 4 xi1 xi2, 4 xi2 (1 - xi1 - xi2 - xi3), 
  4 (1 - xi1 - xi2 - xi3) xi3, 4 xi1 xi3, 4 xi2 xi3};
