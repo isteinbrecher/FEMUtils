@@ -16,7 +16,9 @@ shapeFunctions::usage = "TODO";
 discreteValues::usage = "TODO";
 discreteValuesElement::usage = "TODO";
 discreteValuesNode::usage = "TODO";
+nodalCoordiantes2D::usage = "TODO";
 nodalCoordiantes3D::usage = "TODO";
+elementRegion::usage = "TODO"
 xi::usage = "TODO";
 xi1::usage = "TODO";
 xi2::usage = "TODO";
@@ -124,6 +126,15 @@ elementDimension[var_] :=
     ]
 
 (*Nodal coordinates for 3D elements.*)
+nodalCoordiantes2D[var_] :=
+    Module[ {shapeFunct, solCoordinates},
+        shapeFunct = D[fieldFunction[var],{discreteValues[var]}];
+        solCoordinates = Table[Solve[Table[If[ i==iN,
+                                               1,
+                                               0
+                                           ]==shapeFunct[[i]],{i,Length[shapeFunct]}],{xi1,xi2}],{iN,Length[shapeFunct]}];
+        Flatten[{xi1,xi2}/.solCoordinates,1]
+    ]
 nodalCoordiantes3D[var_] :=
     Module[ {shapeFunct, solCoordinates},
         shapeFunct = D[fieldFunction[var],{discreteValues[var]}];
@@ -172,18 +183,37 @@ shapeFunctionsInternal["hermite3"] :=
 (* ::Section:: *)
 (*2D elements.*)
 
+regionTriangle = Region[Triangle[{{0, 0}, {1, 0}, {0, 1}}]];
+regionRectangle = Region[Rectangle[{-1, -1}, {1, 1}]];
+
+(*Linear triangle.*)
+shapeFunctionsInternal["tri3"] := {1 - xi1 - xi2, xi1, xi2};
+elementRegion["tri3"] := regionTriangle;
+
+(*Quadratic triangle.*)
+shapeFunctionsInternal["tri6"] := {
+    (1 - xi1 - xi2) * (2 (1 - xi1 - xi2) - 1),
+    xi1 * (2 xi1 - 1),
+    xi2 * (2 xi2 - 1),
+    4 (1 - xi1 - xi2) xi1,
+    4 xi1 xi2,
+    4 (1 - xi1 - xi2) xi2
+    };
+elementRegion["tri6"] := regionTriangle;
 
 (*Bilinear quad element.*)
 discreteValuesOrder["quad4"] :=
     {1, 4, 2, 3};
 shapeFunctionsInternal["quad4"] :=
     Flatten[ Transpose[{shapeFunctionsInternal["line2"]} /. xi -> xi1] . ({shapeFunctionsInternal["line2"]} /. xi -> xi2) ];
+elementRegion["quad4"] := regionRectangle;
 
 (*Quadratic rectangular element.*)
 discreteValuesOrder["quad9"] :=
     {1, 4, 8, 2, 3, 6, 5, 7, 9};
 shapeFunctionsInternal["quad9"] :=
     Flatten[ Transpose[{shapeFunctionsInternal["line3"]} /. xi -> xi1] . ({shapeFunctionsInternal["line3"]} /. xi -> xi2) ];
+elementRegion["quad9"] := regionRectangle;
 
 (*Seredipity element.*)
 shapeFunctionsInternal["quad8"] :=
@@ -193,6 +223,7 @@ shapeFunctionsInternal["quad8"] :=
     1/4 ((1 - xi1) (1 + xi2) - (1 - xi1^2) (1 + xi2) - (1 - xi1) (1 - xi2^2)),
     1/2 (1 - xi1^2) (1 - xi2), 1/2 (1 + xi1) (1 - xi2^2), 1/2 (1 - xi1^2) (1 + xi2),
     1/2 (1 - xi1) (1 - xi2^2)};
+elementRegion["quad8"] := regionRectangle;
 
 
 (* ::Section:: *)
